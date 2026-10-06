@@ -17,6 +17,8 @@ const store = useAcceptanceStore()
 const node = computed(() => store.equipment.find((item) => item.id === route.params.id))
 const visible = ref(false)
 const editable = reactive<Partial<AcceptanceItem>>({})
+const certSeverity: Record<string, string> = { 已核验: 'success', 已撤销: 'danger', 换版待核: 'warn', 版本不符: 'warn', 重复挂证: 'danger', 缺回执编号: 'warn', 待核: 'secondary' }
+function ledgerRow(certificateId: string) { return store.ledgerByCertId.get(certificateId) }
 function openItem(item: AcceptanceItem) { Object.assign(editable, structuredClone(item)); visible.value = true }
 function save() {
   if (!node.value || !editable.id) return
@@ -28,7 +30,7 @@ function save() {
 <template>
   <section v-if="node" class="page">
     <div class="section-head"><div><span>{{ node.id }} · {{ node.code }}</span><h2>{{ node.name }}</h2><p>{{ node.type }} · 当前状态 {{ node.status }}</p></div><Tag :value="node.status" :severity="node.status === '已验收' ? 'success' : 'warn'" /></div>
-    <div class="equipment-path"><span v-for="item in store.equipment.filter((value) => value.parentId === node.parentId || value.id === node.id)" :key="item.id" :class="{ active: item.id === node.id }" @click="navigateTo(`/equipment/${item.id}`)">{{ item.name }}</span></div>
+    <div class="equipment-path"><span v-for="item in store.equipment.filter((value) => value.parentId === node?.parentId || value.id === node?.id)" :key="item.id" :class="{ active: item.id === node?.id }" @click="navigateTo(`/equipment/${item.id}`)">{{ item.name }}</span></div>
     <DataTable :value="node.items" dataKey="id" size="small">
       <Column field="id" header="编号" style="width:100px" />
       <Column field="standard" header="验收标准" />
@@ -42,8 +44,15 @@ function save() {
     </DataTable>
     <div class="certificate-panel">
       <h3>证书与测试附件</h3>
-      <div v-for="certificate in node.certificates" :key="certificate.id" class="certificate-item"><Tag :value="certificate.verified ? '已核验' : '待核验'" :severity="certificate.verified ? 'success' : 'danger'" /><strong>{{ certificate.name }}</strong><span>{{ certificate.issuer }}</span><span>有效期至 {{ certificate.expiresAt }}</span><small>V{{ certificate.version }}</small></div>
+      <div v-for="certificate in node.certificates" :key="certificate.id" class="certificate-item">
+        <Tag :value="ledgerRow(certificate.id)?.status ?? '待核'" :severity="(certSeverity[ledgerRow(certificate.id)?.status ?? '待核'] as any)" />
+        <strong>{{ certificate.name }}</strong>
+        <span>{{ certificate.issuer }} · {{ certificate.certNo ?? '缺回执编号' }}</span>
+        <span>有效期至 {{ certificate.expiresAt }} · 命中回执 {{ certificate.receiptNo ?? '无' }}</span>
+        <small>V{{ certificate.version }}</small>
+      </div>
       <p v-if="!node.certificates.length">当前设备节点暂无证书附件。</p>
+      <p v-if="node.status === '待核'" class="cert-warn">该设备证书对账未通过，已改判待核；问题消除前不能签署并网。</p>
     </div>
     <Dialog v-model:visible="visible" header="录入验收项" modal :style="{ width: '620px' }">
       <div class="edit-grid">
