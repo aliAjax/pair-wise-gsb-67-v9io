@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
@@ -10,7 +10,7 @@ import Select from 'primevue/select'
 import Tag from 'primevue/tag'
 import Textarea from 'primevue/textarea'
 import { useAcceptanceStore } from '../../stores/acceptance'
-import type { AcceptanceItem } from '../../types/domain'
+import type { AcceptanceItem, Certificate } from '../../types/domain'
 
 const route = useRoute()
 const store = useAcceptanceStore()
@@ -23,12 +23,15 @@ function save() {
   store.updateItem(node.value.id, editable.id, editable)
   visible.value = false
 }
+const verifySeverity = (state: string) => state === '已核验' ? 'success' : state === '已撤销' ? 'danger' : state === '已换版' ? 'warn' : 'secondary'
+const isDuplicated = (cert: Certificate) => store.reconciliation.duplicateGroups.some((group) => group.certNo === cert.certNo)
+const detach = (cert: Certificate) => { if (node.value) store.removeCertificate(node.value.id, cert.id) }
 </script>
 
 <template>
   <section v-if="node" class="page">
-    <div class="section-head"><div><span>{{ node.id }} · {{ node.code }}</span><h2>{{ node.name }}</h2><p>{{ node.type }} · 当前状态 {{ node.status }}</p></div><Tag :value="node.status" :severity="node.status === '已验收' ? 'success' : 'warn'" /></div>
-    <div class="equipment-path"><span v-for="item in store.equipment.filter((value) => value.parentId === node.parentId || value.id === node.id)" :key="item.id" :class="{ active: item.id === node.id }" @click="navigateTo(`/equipment/${item.id}`)">{{ item.name }}</span></div>
+    <div class="section-head"><div><span>{{ node.id }} · {{ node.code }}</span><h2>{{ node.name }}</h2><p>{{ node.type }} · 当前状态 {{ node.status }}</p></div><Tag :value="node.status" :severity="node.status === '已验收' ? 'success' : node.status === '待核' ? 'danger' : 'warn'" /></div>
+    <div class="equipment-path"><span v-for="item in store.equipment.filter((value) => value.parentId === node?.parentId || value.id === node?.id)" :key="item.id" :class="{ active: item.id === node.id }" @click="navigateTo(`/equipment/${item.id}`)">{{ item.name }}</span></div>
     <DataTable :value="node.items" dataKey="id" size="small">
       <Column field="id" header="编号" style="width:100px" />
       <Column field="standard" header="验收标准" />
@@ -42,8 +45,21 @@ function save() {
     </DataTable>
     <div class="certificate-panel">
       <h3>证书与测试附件</h3>
-      <div v-for="certificate in node.certificates" :key="certificate.id" class="certificate-item"><Tag :value="certificate.verified ? '已核验' : '待核验'" :severity="certificate.verified ? 'success' : 'danger'" /><strong>{{ certificate.name }}</strong><span>{{ certificate.issuer }}</span><span>有效期至 {{ certificate.expiresAt }}</span><small>V{{ certificate.version }}</small></div>
+      <p class="cert-hint">核验状态一律以外部回执对账结果为准：已撤销 / 已换版不得通过，缺回执编号先待核；同编号挂多台设备需摘除误挂证书。</p>
+      <div class="certificate-head"><span>核验结论</span><strong>证书 / 编号</strong><span>签发机构</span><span>有效期至</span><small>台账/回执版本</small><small>回执编号</small><span></span></div>
+      <div v-for="certificate in node.certificates" :key="certificate.id" class="certificate-item">
+        <Tag :value="store.certState(certificate.id)" :severity="verifySeverity(store.certState(certificate.id))" />
+        <strong>{{ certificate.name }}<small v-if="isDuplicated(certificate)" class="dup-warn">编号 {{ certificate.certNo }} 同时挂在多台设备</small></strong>
+        <span>{{ certificate.issuer }}</span>
+        <span>有效期至 {{ certificate.expiresAt }}</span>
+        <small>V{{ certificate.version }}<template v-if="store.certFinding(certificate.id)?.receiptVersion != null"> / 回执V{{ store.certFinding(certificate.id)!.receiptVersion }}</template></small>
+        <small>{{ certificate.receiptNo || '缺失·待核' }}</small>
+        <Button v-if="isDuplicated(certificate)" label="摘除误挂" severity="danger" text size="small" @click="detach(certificate)" />
+      </div>
       <p v-if="!node.certificates.length">当前设备节点暂无证书附件。</p>
+      <ul v-if="node.certificates.length" class="cert-reasons">
+        <li v-for="certificate in node.certificates" :key="`r-${certificate.id}`" v-show="store.certState(certificate.id) !== '已核验'">{{ certificate.certNo }}：{{ store.certFinding(certificate.id)?.reason }}</li>
+      </ul>
     </div>
     <Dialog v-model:visible="visible" header="录入验收项" modal :style="{ width: '620px' }">
       <div class="edit-grid">

@@ -40,9 +40,9 @@ const navigate = (id: string) => navigateTo(`/equipment/${id}`)
         <template #body="{ data }">{{ data.items.filter((item: any) => item.status === '合格').length }} / {{ data.items.length }} 合格</template>
       </Column>
       <Column header="证书">
-        <template #body="{ data }">{{ data.certificates.length }}份 · {{ data.certificates.filter((item: any) => !item.verified).length }}份待核</template>
+        <template #body="{ data }">{{ data.certificates.length }}份 · {{ data.certificates.filter((item: any) => store.certState(item.id) !== '已核验').length }}份待核</template>
       </Column>
-      <Column header="状态"><template #body="{ data }"><Tag :value="data.status" :severity="data.status === '已验收' ? 'success' : data.status === '验收中' ? 'warn' : 'secondary'" /></template></Column>
+      <Column header="状态"><template #body="{ data }"><Tag :value="data.status" :severity="data.status === '已验收' ? 'success' : data.status === '待核' ? 'danger' : data.status === '验收中' ? 'warn' : 'secondary'" /></template></Column>
       <Column header=""><template #body="{ data }"><Button label="打开" text @click="navigate(data.id)" /></template></Column>
     </DataTable>
   </section>

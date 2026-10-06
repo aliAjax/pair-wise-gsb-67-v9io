@@ -11,7 +11,11 @@ export const seedEquipment: EquipmentNode[] = [
       { id: 'IT-G1', standard: '保护定值与调度单一致', method: '逐项比对定值单与装置报文', condition: '并网点开关合位，通信正常', status: '合格', measured: '18/18项一致', evidence: '定值核对记录.pdf', version: 2 },
       { id: 'IT-G2', standard: '故障录波可正确触发', method: '模拟保护启动', condition: '录波装置已对时', status: '待复验', measured: '触发成功，时标偏差28ms', evidence: '录波触发截图.png', version: 2 }
     ],
-    certificates: [{ id: 'C-G1', name: '继电保护装置检验报告', issuer: '省电科院', expiresAt: '2027-09-20', version: 1, verified: true }]
+    certificates: [
+      { id: 'C-G1', name: '继电保护装置检验报告', issuer: '省电科院', expiresAt: '2027-09-20', version: 1, verified: true, certNo: 'CERT-G1', receiptNo: '' },
+      // 同一证书编号误挂到两台设备（并网点/逆变器），对账时需摘除
+      { id: 'C-G1-DUP', name: '逆变器低电压穿越证书（并网点侧误挂）', issuer: '中国电科院', expiresAt: '2028-06-30', version: 2, verified: true, certNo: 'CERT-I1', receiptNo: '' }
+    ]
   },
   {
     id: 'EQ-TR1', parentId: 'EQ-GRID', name: '1号主变压器', type: '变压器', code: 'TR-01', status: '验收中',
@@ -19,11 +23,11 @@ export const seedEquipment: EquipmentNode[] = [
       { id: 'IT-T1', standard: '绝缘电阻不低于出厂值70%', method: '2500V绝缘电阻表测量', condition: '绕组温度25±5℃，湿度低于80%', status: '合格', measured: '高压对地 12.8GΩ', evidence: '绝缘测试原始记录.xlsx', version: 1 },
       { id: 'IT-T2', standard: '有载调压档位与监控一致', method: '远方/就地逐档操作', condition: '变压器空载', status: '不合格', measured: '第7档监控显示第8档', evidence: '档位差异照片.jpg', version: 2 }
     ],
-    certificates: [{ id: 'C-T1', name: '主变出厂试验报告', issuer: '特变电工', expiresAt: '2031-04-10', version: 1, verified: true }]
+    certificates: [{ id: 'C-T1', name: '主变出厂试验报告', issuer: '特变电工', expiresAt: '2031-04-10', version: 1, verified: true, certNo: 'CERT-T1', receiptNo: '' }]
   },
   {
     id: 'EQ-AR1', parentId: 'EQ-TR1', name: '1号方阵', type: '方阵', code: 'ARRAY-01', status: '待验收',
-    items: [{ id: 'IT-A1', standard: '接地连续性符合设计', method: '微欧计抽测30处', condition: '汇流箱断电', status: '待检查', measured: '', evidence: '', version: 1 }], certificates: []
+    items: [{ id: 'IT-A1', standard: '接地连续性符合设计', method: '微欧计抽测30处', condition: '汇流箱断电', status: '待检查', measured: '', evidence: '', version: 1 }], certificates: [{ id: 'C-A1', name: '方阵接地连续性检测报告', issuer: '省电科院', expiresAt: '2027-05-31', version: 1, verified: false, certNo: 'CERT-A1', receiptNo: '' }]
   },
   {
     id: 'EQ-INV11', parentId: 'EQ-AR1', name: '1-1号逆变器', type: '逆变器', code: 'INV-1-1', status: '验收中',
@@ -31,11 +35,11 @@ export const seedEquipment: EquipmentNode[] = [
       { id: 'IT-I1', standard: '通信点表与SCADA一致', method: '逐点置数核对', condition: '调度数据网连通', status: '合格', measured: '126/126点一致', evidence: '点表核对记录.xlsx', version: 3 },
       { id: 'IT-I2', standard: '额定功率下转换效率不低于98.5%', method: '功率分析仪连续测量30分钟', condition: '辐照度≥700W/m²，功率稳定', status: '待复验', measured: '98.3%', evidence: '效率测试曲线.csv', version: 2 }
     ],
-    certificates: [{ id: 'C-I1', name: '逆变器低电压穿越证书', issuer: '中国电科院', expiresAt: '2028-06-30', version: 2, verified: true }]
+    certificates: [{ id: 'C-I1', name: '逆变器低电压穿越证书', issuer: '中国电科院', expiresAt: '2028-06-30', version: 2, verified: true, certNo: 'CERT-I1', receiptNo: '' }]
   },
   {
     id: 'EQ-CB111', parentId: 'EQ-INV11', name: '1-1-1汇流箱', type: '汇流箱', code: 'CB-1-1-1', status: '待验收',
-    items: [{ id: 'IT-C1', standard: '组串极性及开路电压正常', method: '逐路测量并核对设计', condition: '辐照度300-800W/m²', status: '待检查', measured: '', evidence: '', version: 1 }], certificates: []
+    items: [{ id: 'IT-C1', standard: '组串极性及开路电压正常', method: '逐路测量并核对设计', condition: '辐照度300-800W/m²', status: '待检查', measured: '', evidence: '', version: 1 }], certificates: [{ id: 'C-C1', name: '汇流箱型式试验报告', issuer: '第三方检测中心', expiresAt: '2026-12-31', version: 1, verified: false, certNo: 'CERT-C1', receiptNo: '' }]
   }
 ]
 
